@@ -11,7 +11,7 @@ export const authOptions: AuthOptions = {
       authorization: {
         params: {
           access_type: 'offline',
-          prompt: 'consent',
+          prompt: 'consent', // get refresh_token every time with google auth
         },
       },
     }),
@@ -29,7 +29,6 @@ export const authOptions: AuthOptions = {
     },
     async jwt({ token, account, user }) {
       if (account) {
-        console.log(account);
         token.refreshToken = account.refresh_token;
         token.accessToken = account.access_token;
         token.email = user.email;
@@ -38,7 +37,6 @@ export const authOptions: AuthOptions = {
 
       const refreshBuffer = 60 * 1000; // one minute
       if (Date.now() > (token.expiresAt as number) - refreshBuffer) {
-        console.log('refreshing');
         return refreshToken(token);
       }
 
