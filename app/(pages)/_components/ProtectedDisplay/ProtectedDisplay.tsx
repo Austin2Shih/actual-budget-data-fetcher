@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@api/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/(api)/_utils/auth/authOptions';
 import { redirect } from 'next/navigation';
 
 interface ProtectedDisplayProps {

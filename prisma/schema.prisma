@@ -8,9 +8,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model enrollment {
-  id            Int     @id @default(autoincrement())
-  enrollment_id String  @unique
-  access_token  String
-  bank_name     String
+// Each Enrollment represents a connection to a financial institution (e.g., Chase, Bank of America)
+model Enrollment {
+  // The Teller-provided unique ID for the enrollment. This is the primary key.
+  id           String    @id @unique
+  accessToken  String
+  bankName     String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relation: An enrollment can have many accounts.
+  accounts     Account[]
+}
+
+// Each Account represents a specific account within an Enrollment (e.g., Checking, Savings, Credit Card)
+model Account {
+  // The Teller-provided unique ID for the account. This is the primary key.
+  id        String    @id @unique
+  name      String
+  subtype   String    // e.g., "checking", "savings", "credit_card"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Foreign Key for the Enrollment relationship
+  enrollmentId String
+  // Relation: An account belongs to one enrollment.
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  // Relation: An account can have many transactions.
+  transactions Transaction[]
+}
+
+// Each Transaction represents a single financial transaction for a specific Account
+model Transaction {
+  // The Teller-provided unique ID for the transaction. This is the primary key.
+  id          String   @id @unique
+  description String
+  amount      Float    // The transaction amount
+  date        DateTime // The date the transaction occurred
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Key for the Account relationship
+  accountId String
+  // Relation: A transaction belongs to one account.
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

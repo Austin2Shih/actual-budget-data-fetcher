@@ -1,4 +1,4 @@
-import prisma from '@/app/(api)/_utils/prisma/prismaClient';
+import prisma from '@api/_utils/prisma/prismaClient';
 
 export async function createEnrollment({
   enrollmentId,
@@ -11,9 +11,9 @@ export async function createEnrollment({
 }) {
   const enrollment = await prisma.enrollment.create({
     data: {
-      enrollment_id: enrollmentId,
-      access_token: accessToken,
-      bank_name: bankName,
+      id: enrollmentId,
+      accessToken: accessToken,
+      bankName: bankName,
     },
   });
 
