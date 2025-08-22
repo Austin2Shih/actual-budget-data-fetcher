@@ -37,6 +37,8 @@ model Account {
 
   // Relation: An account can have many transactions.
   transactions Transaction[]
+  
+  actualAccountId String?
 }
 
 // Each Transaction represents a single financial transaction for a specific Account

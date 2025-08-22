@@ -1,11 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTellerConnect } from 'teller-connect-react';
 import { createEnrollmentAction } from '@/app/(api)/_actions/teller/enrollments/createEnrollment';
 import useEnrollments from '../../_hooks/useEnrollments';
 import { ManageAccountsModal } from '@pages/_components/ManageAccountsModal/ManageAccountsModal';
+import { AccountCard } from '@pages/_components/AccountCard/AccountCard';
+import { useActualAccounts } from '../../_hooks/useActualAccounts';
 
 export default function AccountsPage() {
   const { open, ready } = useTellerConnect({
@@ -19,10 +20,22 @@ export default function AccountsPage() {
     },
   });
 
-  const { loading, enrollments, error } = useEnrollments();
+  const {
+    loading: actualAccountsLoading,
+    actualAccounts,
+    error: actualAccountsError,
+  } = useActualAccounts();
+  const {
+    loading: enrollmentsLoading,
+    enrollments,
+    error: enrollmentsError,
+  } = useEnrollments();
+
+  const loading = actualAccountsLoading || enrollmentsLoading;
+  const error = actualAccountsError || enrollmentsError;
 
   if (loading) {
-    return <div className="p-6">Loading enrollments...</div>;
+    return <div className="p-6">Loading...</div>;
   }
 
   if (error) {
@@ -38,35 +51,33 @@ export default function AccountsPage() {
         </Button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {enrollments.map((enrollment) => (
-          <Card key={enrollment.id}>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>{enrollment.bankName}</CardTitle>
+          <div key={enrollment.id}>
+            <div className="flex justify-between items-center mb-4 pb-2 border-b">
+              <h2 className="text-xl font-semibold">{enrollment.bankName}</h2>
               <ManageAccountsModal enrollment={enrollment}>
                 <Button variant="outline">Manage Accounts</Button>
               </ManageAccountsModal>
-            </CardHeader>
-            <CardContent>
-              <h3 className="mb-2 font-semibold text-md">Synced Accounts</h3>
-              {enrollment.accounts.length > 0 ? (
-                <ul className="space-y-1 list-disc list-inside">
-                  {enrollment.accounts.map((acct: any) => (
-                    <li key={acct.id} className="text-sm text-muted-foreground">
-                      {acct.name} -{' '}
-                      <span className="capitalize">
-                        {acct.subtype.replace(/_/g, ' ')}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No accounts have been added from this connection yet.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+
+            {enrollment.accounts?.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {enrollment.accounts.map((acct: any) => (
+                  <AccountCard
+                    key={acct.id}
+                    account={acct}
+                    actualAccounts={actualAccounts}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No accounts have been added from this connection yet. Click
+                'Manage Accounts' to add some.
+              </p>
+            )}
+          </div>
         ))}
       </div>
     </div>

@@ -15,7 +15,7 @@ export default function useEnrollments() {
         setEnrollments(res.body!);
       } else {
         setEnrollments([]);
-        setError(res.error as string);
+        setError(res.error?.message || '');
       }
 
       setLoading(false);

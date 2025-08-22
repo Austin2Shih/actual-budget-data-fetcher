@@ -11,8 +11,11 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { getEnrollmentAccountsAction } from '@api/_actions/teller/enrollments/getEnrollmentAccounts';
 import { PlusCircle, Trash2, Loader2 } from 'lucide-react';
+import { createAccountAction } from '@/app/(api)/_actions/teller/accounts/createAccount';
+import useAccounts from '../../_hooks/useAccounts';
+import useEnrollmentAccounts from '../../_hooks/useEnrollmentAccounts';
+import { deleteAccountAction } from '@/app/(api)/_actions/teller/accounts/deleteAccount';
 
 interface ManageAccountsModalProps {
   enrollment: Enrollment;
@@ -24,46 +27,53 @@ export function ManageAccountsModal({
   children,
 }: ManageAccountsModalProps) {
   const [open, setOpen] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, _] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const {
+    loading: enrollmentAccountsLoading,
+    enrollmentAccounts,
+    error: enrollmentAccountsError,
+    fetchEnrollmentAccounts,
+  } = useEnrollmentAccounts();
+  const {
+    loading: accountsLoading,
+    accounts,
+    error: accountsError,
+    fetchAccounts,
+  } = useAccounts();
+
+  const isAccountSaved = (accountId: string) => {
+    return accounts.map(({ id }) => id).includes(accountId);
+  };
 
   useEffect(() => {
-    if (open) {
-      const fetchAccounts = async () => {
-        setLoading(true);
-        setError(null);
-        const accountsRes = await getEnrollmentAccountsAction(enrollment.id);
-        if (accountsRes.ok) {
-          setAccounts(accountsRes.body as Account[]);
-        } else {
-          setError(accountsRes.error as string);
-        }
-        setLoading(false);
-      };
+    fetchEnrollmentAccounts(enrollment.id);
+  }, [enrollment.id, fetchEnrollmentAccounts]);
+
+  const handleAccountChange = async (account: Account) => {
+    startTransition(async () => {
+      if (isAccountSaved(account.id)) {
+        await deleteAccountAction(account.id);
+      } else {
+        await createAccountAction({
+          accountId: account.id,
+          name: account.name,
+          subtype: account.subtype,
+          enrollmentId: enrollment.id,
+        });
+      }
 
       fetchAccounts();
-    }
-  }, [open, enrollment.id]);
+      fetchEnrollmentAccounts(enrollment.id);
+    });
+  };
 
-  // const handleAccountChange = async (account: Account) => {
-  //   startTransition(async () => {
-  //     if (account.isSaved) {
-  //       await removeAccountAction(account.id);
-  //     } else {
-  //       await addAccountAction({
-  //         accountId: account.id,
-  //         accountName: account.name,
-  //         accountSubtype: account.subtype,
-  //         enrollmentId: enrollment.id,
-  //       });
-  //     }
-  //     // After mutation, re-fetch to update the state of the modal buttons
-  //     const updatedAccounts = await getAccountsForEnrollmentAction(enrollment.id);
-  //     setAccounts(updatedAccounts);
-  //   });
-  // };
+  if (accountsLoading) {
+    return <div className="p-6">Loading accounts...</div>;
+  }
+
+  if (accountsError) {
+    return <div className="p-6 text-red-500">Error: {accountsError}</div>;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -73,12 +83,12 @@ export function ManageAccountsModal({
           <DialogTitle>Manage Accounts for {enrollment.bankName}</DialogTitle>
         </DialogHeader>
         <div className="mt-4 space-y-2">
-          {loading ? (
+          {enrollmentAccountsLoading ? (
             <p className="text-center">Loading accounts...</p>
-          ) : error ? (
-            <p>{error}</p>
+          ) : enrollmentAccountsError ? (
+            <p>{enrollmentAccountsError}</p>
           ) : (
-            accounts.map((account) => (
+            enrollmentAccounts.map((account) => (
               <div
                 key={account.id}
                 className="flex items-center justify-between p-2 border rounded-md"
@@ -92,12 +102,12 @@ export function ManageAccountsModal({
                 <Button
                   variant="ghost"
                   size="icon"
-                  // onClick={() => handleAccountChange(account)}
+                  onClick={() => handleAccountChange(account)}
                   disabled={isPending}
                 >
                   {isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : false ? (
+                  ) : isAccountSaved(account.id) ? (
                     <Trash2 className="h-4 w-4 text-red-500" />
                   ) : (
                     <PlusCircle className="h-4 w-4 text-green-500" />

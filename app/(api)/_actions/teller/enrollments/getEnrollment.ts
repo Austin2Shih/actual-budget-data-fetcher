@@ -7,6 +7,6 @@ export async function getEnrollmentsAction() {
     const enrollment = await getEnrollments();
     return { ok: true, body: enrollment, error: null };
   } catch (error) {
-    return { ok: false, body: null, error };
+    return { ok: false, body: null, error: error as Error };
   }
 }
