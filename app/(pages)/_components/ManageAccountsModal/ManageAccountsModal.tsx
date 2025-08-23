@@ -20,11 +20,13 @@ import { deleteAccountAction } from '@/app/(api)/_actions/teller/accounts/delete
 interface ManageAccountsModalProps {
   enrollment: Enrollment;
   children: React.ReactNode;
+  onAccountAdd?: () => void;
 }
 
 export function ManageAccountsModal({
   enrollment,
   children,
+  onAccountAdd,
 }: ManageAccountsModalProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -64,6 +66,7 @@ export function ManageAccountsModal({
 
       fetchAccounts();
       fetchEnrollmentAccounts(enrollment.id);
+      onAccountAdd?.();
     });
   };
 

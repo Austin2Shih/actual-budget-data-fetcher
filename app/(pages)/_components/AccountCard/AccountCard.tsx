@@ -11,6 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { linkAccountAction } from '@/app/(api)/_actions/teller/accounts/linkAccount';
+import { unlinkAccountAction } from '@/app/(api)/_actions/teller/accounts/unlinkAccount'; // Import the new action
+import { X } from 'lucide-react';
 
 interface AccountCardProps {
   account: Account;
@@ -18,29 +21,47 @@ interface AccountCardProps {
 }
 
 export function AccountCard({ account, actualAccounts }: AccountCardProps) {
+  const [currentAccount, setCurrentAccount] = useState(account);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
-    account.actualAccountId
+    currentAccount.actualAccountId
   );
   const [isPending, startTransition] = useTransition();
 
   const handleSave = () => {
     if (!selectedAccountId) return;
 
-    startTransition(() => {
-      // linkAccountToAction(account.id, selectedAccountId);
+    startTransition(async () => {
+      await linkAccountAction({
+        accountId: currentAccount.id,
+        actualAccountId: selectedAccountId,
+      });
+      // Update local state to reflect the change immediately
+      setCurrentAccount((prev) => ({
+        ...prev,
+        actualAccountId: selectedAccountId,
+      }));
     });
   };
 
-  const isLinked = account.actualAccountId !== null;
+  const handleUnlink = () => {
+    startTransition(async () => {
+      await unlinkAccountAction({ accountId: currentAccount.id });
+      // Update local state to reflect the change immediately
+      setCurrentAccount((prev) => ({ ...prev, actualAccountId: null }));
+      setSelectedAccountId(null);
+    });
+  };
+
+  const isLinked = currentAccount.actualAccountId !== null;
   const showSaveButton =
-    selectedAccountId && selectedAccountId !== account.actualAccountId;
+    selectedAccountId && selectedAccountId !== currentAccount.actualAccountId;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{account.name}</CardTitle>
+        <CardTitle className="text-lg">{currentAccount.name}</CardTitle>
         <p className="text-sm text-muted-foreground capitalize">
-          {account.subtype.replace(/_/g, ' ')}
+          {currentAccount.subtype.replace(/_/g, ' ')}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -48,7 +69,8 @@ export function AccountCard({ account, actualAccounts }: AccountCardProps) {
           <label className="text-sm font-medium">Link to Actual Account</label>
           <Select
             onValueChange={setSelectedAccountId}
-            defaultValue={account.actualAccountId ?? undefined}
+            value={selectedAccountId ?? ''} // Use value for controlled component
+            defaultValue={currentAccount.actualAccountId ?? undefined}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select an account..." />
@@ -62,7 +84,19 @@ export function AccountCard({ account, actualAccounts }: AccountCardProps) {
             </SelectContent>
           </Select>
           {isLinked && !showSaveButton && (
-            <p className="text-xs text-green-600 mt-2">✓ Linked</p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-green-600">✓ Linked</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto px-2 py-1 text-xs text-muted-foreground"
+                onClick={handleUnlink}
+                disabled={isPending}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Unlink
+              </Button>
+            </div>
           )}
         </div>
         {showSaveButton && (

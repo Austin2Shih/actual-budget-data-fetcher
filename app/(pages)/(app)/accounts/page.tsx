@@ -9,27 +9,30 @@ import { AccountCard } from '@pages/_components/AccountCard/AccountCard';
 import { useActualAccounts } from '../../_hooks/useActualAccounts';
 
 export default function AccountsPage() {
-  const { open, ready } = useTellerConnect({
-    applicationId: process.env.NEXT_PUBLIC_TELLER_APP_ID!,
-    onSuccess: (authorization) => {
-      createEnrollmentAction({
-        enrollmentId: authorization.enrollment.id,
-        accessToken: authorization.accessToken,
-        bankName: authorization.enrollment.institution.name,
-      });
-    },
-  });
-
   const {
     loading: actualAccountsLoading,
     actualAccounts,
     error: actualAccountsError,
   } = useActualAccounts();
+
   const {
     loading: enrollmentsLoading,
     enrollments,
     error: enrollmentsError,
+    fetchEnrollments,
   } = useEnrollments();
+
+  const { open, ready } = useTellerConnect({
+    applicationId: process.env.NEXT_PUBLIC_TELLER_APP_ID!,
+    onSuccess: async (authorization) => {
+      await createEnrollmentAction({
+        enrollmentId: authorization.enrollment.id,
+        accessToken: authorization.accessToken,
+        bankName: authorization.enrollment.institution.name,
+      });
+      fetchEnrollments();
+    },
+  });
 
   const loading = actualAccountsLoading || enrollmentsLoading;
   const error = actualAccountsError || enrollmentsError;
@@ -56,7 +59,10 @@ export default function AccountsPage() {
           <div key={enrollment.id}>
             <div className="flex justify-between items-center mb-4 pb-2 border-b">
               <h2 className="text-xl font-semibold">{enrollment.bankName}</h2>
-              <ManageAccountsModal enrollment={enrollment}>
+              <ManageAccountsModal
+                enrollment={enrollment}
+                onAccountAdd={fetchEnrollments}
+              >
                 <Button variant="outline">Manage Accounts</Button>
               </ManageAccountsModal>
             </div>
