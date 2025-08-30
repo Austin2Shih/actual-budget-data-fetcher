@@ -1,23 +1,57 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import useEnrollments from '../../_hooks/useEnrollments';
-// import { format } from 'date-fns';
+import { syncTransactionsAction } from '@/app/(api)/_actions/transactions/syncTransactions';
+import { EnrollmentGroup } from '../../_components/AccountSync/EnrollmentGroup';
+import { Loader2 } from 'lucide-react';
 
 export default function SyncPage() {
-  // This hook needs to be updated to fetch the latest transaction for each account.
-  // The data structure should look like: enrollment.accounts[i].transactions[0].date
-  const { loading, enrollments, error } = useEnrollments();
+  const { loading, enrollments, error, fetchEnrollments } = useEnrollments();
+  const [syncingAccountIds, setSyncingAccountIds] = useState<string[]>([]);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
 
-  const handleSyncAll = () => {
-    // TODO: Implement logic to trigger a sync for all linked accounts
-    console.log('Syncing all accounts...');
+  const handleSyncAccount = async (enrollmentId: string, accountId: string) => {
+    setSyncingAccountIds((prev) => [...prev, accountId]);
+
+    try {
+      await syncTransactionsAction({ enrollmentId, accountId });
+      fetchEnrollments();
+    } catch (err) {
+      console.error(`Failed to sync account ${accountId}:`, err);
+    } finally {
+      setSyncingAccountIds((prev) => prev.filter((id) => id !== accountId));
+    }
   };
 
-  const handleSyncAccount = (accountId: string) => {
-    // TODO: Implement logic to trigger a sync for a single account
-    console.log(`Syncing account ${accountId}...`);
+  const handleSyncAll = async () => {
+    setIsSyncingAll(true);
+    const allLinkedAccounts = enrollments
+      .flatMap((e) => e.accounts)
+      .filter((a) => a.actualAccountId);
+
+    setSyncingAccountIds(allLinkedAccounts.map((a) => a.id));
+
+    try {
+      await Promise.all(
+        allLinkedAccounts.map((account) =>
+          syncTransactionsAction({
+            enrollmentId: account.enrollmentId,
+            accountId: account.id,
+          })
+        )
+      );
+      fetchEnrollments();
+    } catch (err) {
+      console.error('Failed during "Sync All":', err);
+    } finally {
+      setIsSyncingAll(false);
+      setSyncingAccountIds([]);
+    }
   };
+
+  const isSyncing = syncingAccountIds.length > 0 || isSyncingAll;
 
   if (loading) {
     return <div className="p-6">Loading accounts...</div>;
@@ -31,57 +65,27 @@ export default function SyncPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6 pb-4 border-b">
         <h1 className="text-2xl font-bold">Sync Bank Data</h1>
-        <Button onClick={handleSyncAll}>Sync All Accounts</Button>
+        <Button onClick={handleSyncAll} disabled={isSyncing}>
+          {isSyncingAll ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing All...
+            </>
+          ) : (
+            'Sync All Accounts'
+          )}
+        </Button>
       </div>
 
       <div className="space-y-8">
-        {enrollments.map(
-          (enrollment) =>
-            // We only want to show enrollments that have at least one linked account
-            enrollment.accounts.some((acc) => acc.actualAccountId) && (
-              <div key={enrollment.id}>
-                <h2 className="text-xl font-semibold mb-4">
-                  {enrollment.bankName}
-                </h2>
-                <div className="space-y-4">
-                  {enrollment.accounts.map(
-                    (account) =>
-                      // Only display accounts that are linked to an Actual Budget account
-                      account.actualAccountId && (
-                        <div
-                          key={account.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
-                        >
-                          <div>
-                            <p className="font-medium">{account.name}</p>
-                            {/* <p className="text-sm text-muted-foreground">
-                              Last transaction pulled:{' '}
-                              {account.transactions &&
-                              account.transactions.length > 0 ? (
-                                <span className="font-semibold text-primary">
-                                  {format(
-                                    new Date(account.transactions[0].date),
-                                    'PPP p'
-                                  )}
-                                </span>
-                              ) : (
-                                <span className="italic">Never synced</span>
-                              )}
-                            </p> */}
-                          </div>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleSyncAccount(account.id)}
-                          >
-                            Sync
-                          </Button>
-                        </div>
-                      )
-                  )}
-                </div>
-              </div>
-            )
-        )}
+        {enrollments.map((enrollment) => (
+          <EnrollmentGroup
+            key={enrollment.id}
+            enrollment={enrollment}
+            syncingAccountIds={syncingAccountIds}
+            onSyncAccount={handleSyncAccount}
+          />
+        ))}
       </div>
     </div>
   );

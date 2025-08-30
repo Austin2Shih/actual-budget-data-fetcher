@@ -45,11 +45,12 @@ model Account {
 model Transaction {
   // The Teller-provided unique ID for the transaction. This is the primary key.
   id          String   @id @unique
-  description String
   amount      Float    // The transaction amount
   date        DateTime // The date the transaction occurred
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  description String
+  type        String
+  category    String?
+  status      String
 
   // Foreign Key for the Account relationship
   accountId String

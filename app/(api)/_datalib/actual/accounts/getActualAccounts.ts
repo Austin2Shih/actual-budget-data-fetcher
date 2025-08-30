@@ -1,8 +1,7 @@
-import { getActualApi } from '@/app/(api)/_utils/actual/actualClient';
-import { pullActualData } from '@/app/(api)/_utils/actual/pullActualData';
+import { sendActualRequest } from '@/app/(api)/_utils/actual/sendActualRequest';
 
 export async function getActualAccounts() {
-  const actual = await getActualApi();
-  await pullActualData();
-  return actual.getAccounts();
+  return sendActualRequest(async (actualInstance) => {
+    return actualInstance.getAccounts();
+  });
 }
