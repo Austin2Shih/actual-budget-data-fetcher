@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { getEnrollmentsAction } from '@/app/(api)/_actions/teller/enrollments/getEnrollment';
 import { EnrollmentWithAccounts } from '@/app/_types/EnrollmentWithAccounts';
+import { getLocalBanksAction } from '@/app/(api)/_actions/localBanks/getLocalBank';
 
 export default function useEnrollments() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -9,7 +9,7 @@ export default function useEnrollments() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchEnrollments = useCallback(async () => {
-    const res = await getEnrollmentsAction();
+    const res = await getLocalBanksAction();
     if (res.ok) {
       setEnrollments(res.body!);
     } else {

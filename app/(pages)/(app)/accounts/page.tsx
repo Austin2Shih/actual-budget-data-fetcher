@@ -2,11 +2,11 @@
 
 import { Button } from '@/components/ui/button';
 import { useTellerConnect } from 'teller-connect-react';
-import { createEnrollmentAction } from '@/app/(api)/_actions/teller/enrollments/createEnrollment';
 import useEnrollments from '../../_hooks/useEnrollments';
 import { ManageAccountsModal } from '@pages/_components/ManageAccountsModal/ManageAccountsModal';
 import { AccountCard } from '@pages/_components/AccountCard/AccountCard';
 import { useActualAccounts } from '../../_hooks/useActualAccounts';
+import { createLocalBankAction } from '@/app/(api)/_actions/localBanks/createLocalBank';
 
 export default function AccountsPage() {
   const {
@@ -25,7 +25,7 @@ export default function AccountsPage() {
   const { open, ready } = useTellerConnect({
     applicationId: process.env.NEXT_PUBLIC_TELLER_APP_ID!,
     onSuccess: async (authorization) => {
-      await createEnrollmentAction({
+      await createLocalBankAction({
         enrollmentId: authorization.enrollment.id,
         accessToken: authorization.accessToken,
         bankName: authorization.enrollment.institution.name,

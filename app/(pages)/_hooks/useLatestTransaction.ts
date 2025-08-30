@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { Transaction } from '@/lib/generated/prisma';
-import { getLatestTransactionAction } from '@/app/(api)/_actions/transactions/getTransactions';
+import { getLatestLocalTransactionAction } from '@/app/(api)/_actions/localTransactions/getLocalTransaction';
 
 export default function useLatestTransaction(accountId: string) {
   const [loading, setLoading] = useState<boolean>(true);
@@ -10,7 +10,7 @@ export default function useLatestTransaction(accountId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchLatestTransaction = useCallback(async () => {
-    const res = await getLatestTransactionAction(accountId);
+    const res = await getLatestLocalTransactionAction(accountId);
     if (res.ok) {
       setLatestTransaction(res.body);
     } else {

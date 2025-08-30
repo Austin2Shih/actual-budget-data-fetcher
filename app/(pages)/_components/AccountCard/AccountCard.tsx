@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { linkAccountAction } from '@/app/(api)/_actions/teller/accounts/linkAccount';
-import { unlinkAccountAction } from '@/app/(api)/_actions/teller/accounts/unlinkAccount'; // Import the new action
+import { linkLocalAccountAction } from '@/app/(api)/_actions/localAccounts/linkLocalAccount';
+import { unlinkLocalAccountAction } from '@/app/(api)/_actions/localAccounts/unlinkLocalAccount';
 import { X } from 'lucide-react';
 
 interface AccountCardProps {
@@ -31,7 +31,7 @@ export function AccountCard({ account, actualAccounts }: AccountCardProps) {
     if (!selectedAccountId) return;
 
     startTransition(async () => {
-      await linkAccountAction({
+      await linkLocalAccountAction({
         accountId: currentAccount.id,
         actualAccountId: selectedAccountId,
       });
@@ -45,7 +45,7 @@ export function AccountCard({ account, actualAccounts }: AccountCardProps) {
 
   const handleUnlink = () => {
     startTransition(async () => {
-      await unlinkAccountAction({ accountId: currentAccount.id });
+      await unlinkLocalAccountAction({ accountId: currentAccount.id });
       // Update local state to reflect the change immediately
       setCurrentAccount((prev) => ({ ...prev, actualAccountId: null }));
       setSelectedAccountId(null);

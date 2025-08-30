@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { Account } from '@/lib/generated/prisma';
-import { getEnrollmentAccountsAction } from '@/app/(api)/_actions/teller/enrollments/getEnrollmentAccounts';
+import { getBankAccountsAction } from '@/app/(api)/_actions/banks/getBankAccounts';
 
 export default function useEnrollmentAccounts() {
   const [enrollmentAccounts, setEnrollmentAccounts] = useState<Account[]>([]);
@@ -12,8 +12,7 @@ export default function useEnrollmentAccounts() {
   const fetchEnrollmentAccounts = useCallback(async (enrollmentId: string) => {
     setLoading(true);
     setError(null);
-    const enrollmentAccountsRes =
-      await getEnrollmentAccountsAction(enrollmentId);
+    const enrollmentAccountsRes = await getBankAccountsAction(enrollmentId);
     if (enrollmentAccountsRes.ok) {
       setEnrollmentAccounts(enrollmentAccountsRes.body as Account[]);
     } else {

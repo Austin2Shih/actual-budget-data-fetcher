@@ -1,5 +1,5 @@
 'use client';
-import { getActualAccountsAction } from '@/app/(api)/_actions/actual/accounts/getActualAccounts';
+import { getBudgetAccountsAction } from '@/app/(api)/_actions/budgetAccounts/getBudgetAccount';
 import { useState, useEffect } from 'react';
 
 export function useActualAccounts() {
@@ -10,7 +10,7 @@ export function useActualAccounts() {
   const fetchActualAccounts = async () => {
     setLoading(true);
     setError(null);
-    const actualAccountsRes = await getActualAccountsAction();
+    const actualAccountsRes = await getBudgetAccountsAction();
     if (actualAccountsRes.ok) {
       setActualAccounts(actualAccountsRes.body!);
     } else {

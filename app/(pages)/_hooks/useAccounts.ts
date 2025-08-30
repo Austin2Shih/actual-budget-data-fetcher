@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getAccountsAction } from '@/app/(api)/_actions/teller/accounts/getAccount';
 import { Account } from '@/lib/generated/prisma';
+import { getLocalAccountsAction } from '@/app/(api)/_actions/localAccounts/getLocalAccount';
 
 export default function useAccounts() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -9,7 +9,7 @@ export default function useAccounts() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchAccounts = async () => {
-    const res = await getAccountsAction();
+    const res = await getLocalAccountsAction();
     if (res.ok) {
       setAccounts(res.body!);
     } else {

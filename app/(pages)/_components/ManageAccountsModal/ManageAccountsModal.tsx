@@ -12,10 +12,10 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, Loader2 } from 'lucide-react';
-import { createAccountAction } from '@/app/(api)/_actions/teller/accounts/createAccount';
 import useAccounts from '../../_hooks/useAccounts';
 import useEnrollmentAccounts from '../../_hooks/useEnrollmentAccounts';
-import { deleteAccountAction } from '@/app/(api)/_actions/teller/accounts/deleteAccount';
+import { createLocalAccountAction } from '@/app/(api)/_actions/localAccounts/createLocalAccount';
+import { deleteLocalAccountAction } from '@/app/(api)/_actions/localAccounts/deleteLocalAccount';
 
 interface ManageAccountsModalProps {
   enrollment: Enrollment;
@@ -54,9 +54,9 @@ export function ManageAccountsModal({
   const handleAccountChange = async (account: Account) => {
     startTransition(async () => {
       if (isAccountSaved(account.id)) {
-        await deleteAccountAction(account.id);
+        await deleteLocalAccountAction(account.id);
       } else {
-        await createAccountAction({
+        await createLocalAccountAction({
           accountId: account.id,
           name: account.name,
           subtype: account.subtype,

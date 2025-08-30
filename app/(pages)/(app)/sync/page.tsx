@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import useEnrollments from '../../_hooks/useEnrollments';
-import { syncTransactionsAction } from '@/app/(api)/_actions/transactions/syncTransactions';
+import { syncTransactionsAction } from '@/app/(api)/_actions/sync/syncTransactions';
 import { EnrollmentGroup } from '../../_components/AccountSync/EnrollmentGroup';
 import { Loader2 } from 'lucide-react';
 
