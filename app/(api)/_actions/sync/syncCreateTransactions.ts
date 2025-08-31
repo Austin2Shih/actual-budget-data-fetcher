@@ -1,14 +1,14 @@
 'use server';
 import { getBankTransactions } from '../../_datalib/banks/getBankTransactions';
+import { createBudgetTransactions } from '../../_datalib/budgetTransactions/createBudgetTransaction';
 import { getLocalAccountById } from '../../_datalib/localAccounts/getLocalAccount';
-import { sendActualRequest } from '../../_utils/actual/sendActualRequest';
-import prisma from '../../_utils/prisma/prismaClient';
+import { createLocalTransactions } from '../../_datalib/localTransactions/createLocalTransaction';
 import {
   formatTransaction,
   formatTransactionForActual,
 } from '../../_utils/transactions/formatTransaction';
 
-export async function syncTransactionsAction({
+export async function syncCreateTransactions({
   enrollmentId,
   accountId,
   fromId,
@@ -35,19 +35,12 @@ export async function syncTransactionsAction({
   const prismaTransactions = rawTransactions.map(formatTransaction) || [];
 
   try {
-    const actualApiRes = await sendActualRequest(async (actualInstance) => {
-      return actualInstance.importTransactions(
-        account?.actualAccountId as string,
-        actualTransactions
-      );
-    });
+    const actualApiRes = await createBudgetTransactions(
+      account?.actualAccountId as string,
+      actualTransactions
+    );
 
-    const databaseRes = await prisma.$transaction(async (tx) => {
-      return tx.transaction.createMany({
-        data: prismaTransactions,
-        skipDuplicates: true,
-      });
-    });
+    const databaseRes = await createLocalTransactions(prismaTransactions);
 
     return { ok: true, body: { actualApiRes, databaseRes }, error: null };
   } catch (error) {

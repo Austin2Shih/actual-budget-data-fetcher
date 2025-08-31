@@ -1,61 +1,63 @@
 'use client';
 
-import useLatestTransaction from '../../_hooks/useLatestTransaction';
-import { AccountSyncCard } from './AccountSyncCard';
-import type { Account, Enrollment } from '@/lib/generated/prisma';
+import { EnrollmentWithAccounts } from '@/app/_types/EnrollmentWithAccounts';
+import AccountSyncCard from './AccountSyncCard';
+import type { LatestTransactionSyncHandle } from './AccountSyncCard';
+import { ForwardedRef, forwardRef } from 'react';
 
 interface EnrollmentGroupProps {
-  enrollment: Enrollment & { accounts: Account[] };
+  enrollment: EnrollmentWithAccounts;
   syncingAccountIds: string[];
+  resetingAccountIds: string[];
   onSyncAccount: (enrollmentId: string, accountId: string) => void;
+  onResetAccount: (actualAccountId: string) => void;
 }
 
-export function EnrollmentGroup({
-  enrollment,
-  syncingAccountIds,
-  onSyncAccount,
-}: EnrollmentGroupProps) {
-  if (!enrollment.accounts.some((acc) => acc.actualAccountId)) {
-    return null;
-  }
+const EnrollmentGroup = forwardRef(
+  (
+    {
+      enrollment,
+      syncingAccountIds,
+      resetingAccountIds,
+      onSyncAccount,
+      onResetAccount,
+    }: EnrollmentGroupProps,
+    ref: ForwardedRef<{
+      [key: string]: LatestTransactionSyncHandle | null;
+    }>
+  ) => {
+    const linkedAccounts = enrollment.accounts.filter((a) => a.actualAccountId);
 
-  return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">{enrollment.bankName}</h2>
-      <div className="space-y-4">
-        {enrollment.accounts.map(
-          (account) =>
-            account.actualAccountId && (
-              <AccountWrapper
-                key={account.id}
-                account={account}
-                isSyncing={syncingAccountIds.includes(account.id)}
-                onSync={() => onSyncAccount(enrollment.id, account.id)}
-              />
-            )
-        )}
+    if (linkedAccounts.length === 0) {
+      return null;
+    }
+
+    return (
+      <div>
+        <h2 className="text-xl font-semibold mb-4">{enrollment.bankName}</h2>
+        <div className="space-y-4">
+          {linkedAccounts.map((account) => (
+            <AccountSyncCard
+              key={account.id}
+              account={account}
+              isSyncing={syncingAccountIds.includes(account.id)}
+              isResetting={resetingAccountIds.includes(
+                account.actualAccountId!
+              )}
+              onSync={() => onSyncAccount(enrollment.id, account.id)}
+              onReset={() => onResetAccount(account.actualAccountId!)}
+              ref={(handle) => {
+                if (typeof ref === 'object' && ref?.current) {
+                  ref.current[account.id] = handle;
+                }
+              }}
+            />
+          ))}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
 
-function AccountWrapper({
-  account,
-  isSyncing,
-  onSync,
-}: {
-  account: Account;
-  isSyncing: boolean;
-  onSync: () => void;
-}) {
-  const { latestTransaction } = useLatestTransaction(account.id);
-
-  return (
-    <AccountSyncCard
-      accountName={account.name}
-      latestTransaction={latestTransaction}
-      isSyncing={isSyncing}
-      onSync={onSync}
-    />
-  );
-}
+EnrollmentGroup.displayName = 'EnrollmentGroup';
+export default EnrollmentGroup;

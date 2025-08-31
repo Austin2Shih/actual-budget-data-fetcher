@@ -6,3 +6,12 @@ export async function createLocalTransaction(transactionData: Transaction) {
     data: transactionData,
   });
 }
+
+export async function createLocalTransactions(transactions: any[]) {
+  return prisma.$transaction(async (tx) => {
+    return tx.transaction.createMany({
+      data: transactions,
+      skipDuplicates: true,
+    });
+  });
+}
